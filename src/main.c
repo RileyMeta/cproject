@@ -26,8 +26,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         char *cur_arg = argv[i];
-        if ((cur_arg[0] == '-') ||
-                (cur_arg[0] == '-' && cur_arg[1] == '-')) {
+        if ((cur_arg[0] == '-') || (cur_arg[0] == '-' && cur_arg[1] == '-')) {
 
             if (strcmp(cur_arg, "--help") == 0) {
                 help_menu();
@@ -107,46 +106,129 @@ void version_menu(void) {
 
 // Actual Logic
 int rearrange_project(const char *project_name) {
-    printf("This has not been implimented yet.\n");
+    if (dir_exists(project_name) == 0) {
+        printf("'%s' already exists.\n", project_name);
+        printf("The contents of the folder will be rearranged.\n");
+    } else {
+        printf("'%s' does not exist.\n", project_name);
+        printf("A new folder will be created.\n");
+        return create_project(project_name);
+    }
 
-//     if (dir_exists(project_name) == 0) {
-//         printf("'%s' already exists.\n", project_name);
-//         printf("The contents of the folder will be rearranged.");
-//     } else {
-//         printf("'%s' does not exist.\n", project_name);
-//         printf("A new folder will be created.\n");
-//     }
+    // make sure src/ dir exists
+    char src[256];
+    strcpy(src, project_name);
+    strcat(src, "/src/");
+    if (dir_exists(src) != 0) {
+        if (make_directory(src) != 0) {
+            fprintf(stderr, "Unable to create directory '%s'.\n", src);
+            return 1;
+        }
+    }
 
-//     char src[256] = "";
-//     strcat(src, project_name);
-//     strcat(src, "/src/");
-//     if (dir_exists(src) != 0) {
-//         make_directory(src);
-//     }
+    // make sure include/ dir exists
+    char include[256];
+    strcpy(include, project_name);
+    strcat(include, "/include/");
+    if (dir_exists(include) != 0) {
+        if (make_directory(include) != 0) {
+            fprintf(stderr, "Unable to create directory '%s'.\n", include);
+            return 1;
+        }
+    }
 
-//     char inlcude[256] = "";
-//     strcat(include, project_name);
-//     strcat(include, "/include/");
-//     if (dir_exists(include) != 0) {
-//         make_directory(include);
-//     }
+    // make sure lib/ dir exists
+    char lib[256];
+    strcpy(lib, project_name);
+    strcat(lib, "/lib/");
+    if (dir_exists(lib) != 0) {
+        if (make_directory(lib) != 0) {
+            fprintf(stderr, "Unable to create directory '%s'.\n", lib);
+            return 1;
+        }
+    }
 
-//     char lib[256] = "";
-//     strcat(lib, project_name);
-//     strcat(lib, "/lib/");
-//     if (dir_exists(lib) != 0) {
-//         make_directory(lib);
-//     }
+    // make sure src/main.c exists
+    char mainc[256];
+    strcpy(mainc, project_name);
+    strcat(mainc, "/src/main.c");
+    if (file_exists(mainc) != 0) {
+        if (make_c_file(project_name, "src", "main.c") != 0) {
+            fprintf(stderr, "Unable to create '%s'.\n", mainc);
+            return 1;
+        }
+    }
 
-//     // Walk the directory and move any files
-//     // ^- If any file ends with '.c' move to src/
-//     // ^- If any file ends with '.h' move to include/
+    // make sure README.md exists
+    char readme[256];
+    strcpy(readme, project_name);
+    strcat(readme, "/README.md");
+    if (file_exists(readme) != 0) {
+        if (make_readme(readme) != 0) {
+            fprintf(stderr, "Unable to create '%s'.\n", readme);
+            return 1;
+        }
+    }
 
-//     // Create main.c if not exists
-//     // Create README.md if not exists
-//     // Create Makefile if not exists
+    // make sure Makefile exists
+    char makefile[256];
+    strcpy(makefile, project_name);
+    strcat(makefile, "/Makefile");
+    if (file_exists(makefile) != 0) {
+        if (make_makefile(makefile) != 0) {
+            fprintf(stderr, "Unable to create '%s'.\n", makefile);
+            return 1;
+        }
+    }
 
-//     printf("'%s' has been converted into a C project.\n", project_name);
+    char **files = NULL;
+
+    if (verbose == 1) {
+        printf("Walking Directory '%s'.\n", project_name);
+    }
+    size_t count = walk_directory(project_name, &files); // This is failing.
+
+    if (count < 0) {
+        printf("No files found inside '%s'\n", project_name);
+    } else {
+
+        printf("Files Found: %ld\n", count);
+        // Walk the directory and move any files
+        for (int i = 0; i < count; i++) {
+            printf("'%s'\n", files[i]);
+
+            // If any file ends with '.c' move to src/
+            if (ends_with(files[i], ".c") == 0) {
+                char dest[256];
+                strcpy(dest, src);
+                strcat(dest, "/");
+                strcat(dest, files[i]);
+
+                if (move_file(files[i], dest) != 0) {
+                    fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
+                }
+            }
+
+            // If any file ends with '.h' move to include/
+            if (ends_with(files[i], ".h") == 0) {
+                char dest[256];
+                strcpy(dest, include);
+                strcat(dest, "/");
+                strcat(dest, files[i]);
+
+                if (move_file(files[i], dest) != 0) {
+                    fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
+                }
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            free(files[i]);
+        }
+        free(files);
+    }
+
+    printf("'%s' has been converted into a C project.\n", project_name);
 
     return 0;
 }
