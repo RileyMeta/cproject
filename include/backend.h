@@ -10,5 +10,7 @@ int make_directory(const char *directory);
 int write_to_file(const char *filename, const char *input, const char *mode);
 int move_file(const char *filename, const char *destination);
 int starts_with(const char *string, const char *match);
+int ends_with(const char *string, const char *match);
+int walk_directory(const char *dir_path, char ***arr);
 
 #endif
