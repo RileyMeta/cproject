@@ -228,3 +228,28 @@ int walk_directory(const char *dir_path, char ***arr) {
     closedir(dp);
     return count;
 }
+
+char *r_split(char *string, const char delim) {
+    char *return_str = malloc(sizeof(char) * 256);
+    char output[256];
+    int length = strlen(string) - 1;
+    int start = 0;
+
+    for (int i = length; i >= 0; i--) {
+        if (string[i] == delim) {
+            start = i + 1;
+            break;
+        }
+    }
+
+    if (start == 0) {
+        return string;
+    }
+
+    for (int i = start, o = 0; i <= length; i++, o++) {
+        output[o] = string[i];
+    }
+
+    strcpy(return_str, output);
+    return return_str;
+}
