@@ -3,7 +3,7 @@ SRC := $(wildcard src/*.c)
 
 # Compiler and Flags
 CC = gcc
-CFLAGS = -Wall -std=c11 -Wno-missing-braces -Iinclude
+CFLAGS = -Wall -D_GNU_SOURCE -std=c11 -Wno-missing-braces -Iinclude
 
 # Libraries and linking
 # LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
