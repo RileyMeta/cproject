@@ -115,7 +115,11 @@ int write_to_file(const char *filename, const char *input, const char *mode) {
 }
 
 int move_file(const char *filename, const char *destination) {
-    // do shit, idk
+    if (rename(filename, destination) != 0) {
+        perror("Error renaming file");
+        return 1;
+    }
+
     return 0;
 }
 
@@ -167,8 +171,9 @@ int empty_dir(const char *dirname) {
     }
 
     while ((d = readdir(dir)) != NULL) {
-        if(++n > 2)
+        if (++n > 2) {
             break;
+        }
     }
 
     closedir(dir);
@@ -182,14 +187,17 @@ int empty_dir(const char *dirname) {
     return 1;
 }
 
-void walk_directory(const char *dir_path) {
+int walk_directory(const char *dir_path, char ***arr) {
     struct dirent *entry;
     struct stat statbuf;
+    size_t count = 0;
+    size_t capacity = 0;
+
     DIR *dp = opendir(dir_path);
 
     if (dp == NULL) {
         perror("opendir");
-        return;
+        return -1;
     }
 
     while ((entry = readdir(dp)) != NULL) {
@@ -204,11 +212,19 @@ void walk_directory(const char *dir_path) {
             }
 
             // Add to array
-            printf("%s\n", path);
+            if (count == capacity) {
+                capacity += 16;
+                *arr = realloc(*arr, capacity * sizeof(char *));
+                if (*arr == NULL) {
+                    perror("realloc");
+                    closedir(dp);
+                    return -1;
+                }
+            }
+            (*arr)[count++] = strdup(path);
         }
     }
 
     closedir(dp);
-
-    // Return the array
+    return count;
 }
