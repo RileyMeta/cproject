@@ -202,7 +202,7 @@ int rearrange_project(const char *project_name) {
                 char dest[256];
                 strcpy(dest, src);
                 strcat(dest, "/");
-                strcat(dest, files[i]);
+                strcat(dest, r_split(files[i], '/'));
 
                 if (move_file(files[i], dest) != 0) {
                     fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
@@ -214,7 +214,7 @@ int rearrange_project(const char *project_name) {
                 char dest[256];
                 strcpy(dest, include);
                 strcat(dest, "/");
-                strcat(dest, files[i]);
+                strcat(dest, r_split(files[i], '/'));
 
                 if (move_file(files[i], dest) != 0) {
                     fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
