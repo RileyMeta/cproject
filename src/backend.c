@@ -253,3 +253,18 @@ char *r_split(char *string, const char delim) {
     strcpy(return_str, output);
     return return_str;
 }
+
+char *strip_trailing(char *string, const char delim) {
+    char *return_str = malloc(sizeof(char) * 256);
+    int length = strlen(string) - 1;
+
+    if (string[length] != delim) {
+        return string;
+    }
+
+    for (int i = 0; i < length; i++) {
+        return_str[i] = string[i];
+    }
+
+    return return_str;
+}
