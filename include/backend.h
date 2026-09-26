@@ -13,5 +13,6 @@ int starts_with(const char *string, const char *match);
 int ends_with(const char *string, const char *match);
 int walk_directory(const char *dir_path, char ***arr);
 char *r_split(char *string, const char delim);
+char *strip_trailing(char *string, const char delim);
 
 #endif
