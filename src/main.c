@@ -12,12 +12,14 @@ int create_project(const char *project_name);
 int make_readme(const char *filename);
 int make_subdir(const char *project_name, const char *subdir);
 int make_c_file(const char *project_name, const char *subdir, const char *filename);
-int make_makefile(const char *project_name);
+int make_makefile(const char *project_name, int standalone);
 
 // Global Variables
 int verbose = 0;
 
 int main(int argc, char *argv[]) {
+    int normal   = 1;
+    int cfile    = 0;
     int makefile = 0;
     int in_place = 0;
     char **inputs;
@@ -36,8 +38,12 @@ int main(int argc, char *argv[]) {
                 return 0;
             } else if (strcmp(cur_arg, "-M") == 0 || strcmp(cur_arg, "--makefile") == 0) {
                 makefile = 1;
+                normal = 0;
             } else if (strcmp(cur_arg, "-V") == 0 || strcmp(cur_arg, "--verbose") == 0) {
                 verbose = 1;
+            } else if (strcmp(cur_arg, "-C") == 0 || strcmp(cur_arg, "--cfile") == 0) {
+                cfile = 1;
+                normal = 0;
             } else if (strcmp(cur_arg, "-I") == 0 || strcmp(cur_arg, "--inplace") == 0) {
                 in_place = 1;
             } else {
@@ -63,8 +69,24 @@ int main(int argc, char *argv[]) {
         char *cur_in = inputs[i];
 
         if (makefile == 1) {
-            make_makefile(cur_in);
-        } else {
+            if (file_exists("Makefile") == 0) {
+                printf("'Makefile' already exists.\n");
+                return 1;
+            }
+            make_makefile(cur_in, 1);
+        }
+
+        if (cfile == 1) {
+            char filename[256];
+            strcpy(filename, cur_in);
+            strcat(filename, ".c");
+            if (file_exists(filename) == 0) {
+                printf("'%s' already exists.\n", filename);
+                return 1;
+            }
+            make_c_file(cur_in, "", "");
+        }
+        if (normal == 1) {
             if (in_place == 1) {
                 rearrange_project(cur_in);
             } else {
@@ -85,9 +107,10 @@ void help_menu(void) {
     usage();
     printf("Generate a templated C project folder.\n");
     printf("\n");
-    printf("  -M, --makefile    create only a makefile\n");
     printf("  -I, --inplace     use the current folder as-is\n");
     printf("  -V, --verbose     print more debugging info\n");
+    printf("  -M, --makefile    create only a makefile\n");
+    printf("  -C, --cfile       create only a c file\n");
     printf("\n");
     printf("      --help     display this help and exit\n");
     printf("      --version  output version information and exit\n");
@@ -186,7 +209,7 @@ int rearrange_project(const char *project_name) {
             return 1;
         }
     }
-    if (make_makefile(project_name) != 0) {
+    if (make_makefile(project_name, 0) != 0) {
         fprintf(stderr, "Unable to create '%s'.\n", makefile);
         return 1;
     }
@@ -324,7 +347,7 @@ int create_project(const char *project_name) {
     }
 
     // Create Makefile
-    if (make_makefile(project_name) != 0) {
+    if (make_makefile(project_name, 0) != 0) {
         fprintf(stderr, "Unable to create the Makefile.\n");
         return 1;
     }
@@ -377,10 +400,15 @@ int make_subdir(const char *project_name, const char *subdir) {
 int make_c_file(const char *project_name, const char *subdir, const char *filename) {
     char main_file[256] = "";
     strcat(main_file, project_name);
-    strcat(main_file, "/");
-    strcat(main_file, subdir);
-    strcat(main_file, "/");
-    strcat(main_file, filename);
+    if (strcmp(subdir, "") != 0) {
+        strcat(main_file, "/");
+        strcat(main_file, subdir);
+        strcat(main_file, "/");
+    }
+    if (strcmp(filename, "") != 0) {
+        strcat(main_file, filename);
+    }
+    strcat(main_file, ".c");
 
     char *contents[] = {
         "#include <stdio.h>\n",
@@ -406,10 +434,12 @@ int make_c_file(const char *project_name, const char *subdir, const char *filena
     return 0;
 }
 
-int make_makefile(const char *project_name) {
+int make_makefile(const char *project_name, int standalone) {
     char main_file[256] = "";
-    strcat(main_file, project_name);
-    strcat(main_file, "/");
+    if (standalone == 0) {
+        strcat(main_file, project_name);
+        strcat(main_file, "/");
+    }
     strcat(main_file, "Makefile");
 
     char header[256] = "TARGET = ";
