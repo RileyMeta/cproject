@@ -73,6 +73,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    for (int i = 0; i < count; i++) {
+        free(inputs[i]);
+    }
     free(inputs);
     return 0;
 }
