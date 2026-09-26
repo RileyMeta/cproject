@@ -48,7 +48,8 @@ int main(int argc, char *argv[]) {
                 capacity += 16;
                 inputs = realloc(inputs, capacity * sizeof(char *));
             }
-            inputs[count++] = cur_arg;
+            char *new_name = strip_trailing(cur_arg, '/');
+            inputs[count++] = new_name;
         }
     }
 
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    free(inputs);
     return 0;
 }
 
@@ -164,7 +166,7 @@ int rearrange_project(const char *project_name) {
     strcpy(readme, project_name);
     strcat(readme, "/README.md");
     if (file_exists(readme) != 0) {
-        if (make_readme(readme) != 0) {
+        if (make_readme(project_name) != 0) {
             fprintf(stderr, "Unable to create '%s'.\n", readme);
             return 1;
         }
@@ -174,51 +176,76 @@ int rearrange_project(const char *project_name) {
     char makefile[256];
     strcpy(makefile, project_name);
     strcat(makefile, "/Makefile");
-    if (file_exists(makefile) != 0) {
-        if (make_makefile(makefile) != 0) {
-            fprintf(stderr, "Unable to create '%s'.\n", makefile);
+    if (file_exists(makefile) == 0) {
+        char old_makefile[256];
+        strcpy(old_makefile, project_name);
+        strcat(old_makefile, "/old.Makefile");
+
+        if (move_file(makefile, old_makefile) != 0) {
+            fprintf(stderr, "Unable to move 'Makefile' to 'old.Makefile'\n");
             return 1;
         }
     }
-
-    char **files = NULL;
+    if (make_makefile(project_name) != 0) {
+        fprintf(stderr, "Unable to create '%s'.\n", makefile);
+        return 1;
+    }
 
     if (verbose == 1) {
         printf("Walking Directory '%s'.\n", project_name);
     }
+    char **files = NULL;
     size_t count = walk_directory(project_name, &files); // This is failing.
 
     if (count < 0) {
-        printf("No files found inside '%s'\n", project_name);
+        if (verbose == 1) {
+            printf("No files found inside '%s'\n", project_name);
+        }
     } else {
+        if (verbose == 1) {
+            printf("Files Found: %ld\n", count);
+        }
 
-        printf("Files Found: %ld\n", count);
         // Walk the directory and move any files
         for (int i = 0; i < count; i++) {
-            printf("'%s'\n", files[i]);
+            if (verbose == 1) {
+                printf("'%s'\n", files[i]);
+            }
 
             // If any file ends with '.c' move to src/
             if (ends_with(files[i], ".c") == 0) {
                 char dest[256];
                 strcpy(dest, src);
-                strcat(dest, "/");
-                strcat(dest, r_split(files[i], '/'));
+                char *file = r_split(files[i], '/');
+                strcat(dest, file);
 
                 if (move_file(files[i], dest) != 0) {
                     fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
                 }
+
+                if (verbose == 1) {
+                    printf("'%s' was moved to '%s'.\n", file, dest);
+                }
+
+                free(file);
             }
 
             // If any file ends with '.h' move to include/
             if (ends_with(files[i], ".h") == 0) {
                 char dest[256];
                 strcpy(dest, include);
-                strcat(dest, "/");
-                strcat(dest, r_split(files[i], '/'));
+                char *file = r_split(files[i], '/');
+                strcat(dest, file);
 
                 if (move_file(files[i], dest) != 0) {
                     fprintf(stderr, "Unable to move '%s' to '%s'\n", files[i], dest);
                 }
+
+                if (verbose == 1) {
+                    printf("'%s' was moved to '%s'.\n", file, dest);
+                }
+
+                free(file);
             }
         }
 
