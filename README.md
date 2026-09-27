@@ -37,7 +37,7 @@ make install
 
 ### Manual
 ```bash
-gcc src/main.c src/backend.c -o cproject -Wall -std=c11 -Wno-missing-braces
+gcc src/main.c src/backend.c -o cproject -Wall -D_GNU_SOURCE -std=c11 -Wno-missing-braces
 sudo cp cproject /usr/bin/cproject
 sudo chmod a+x /usr/bin/cproject
 ```
